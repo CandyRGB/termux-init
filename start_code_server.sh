@@ -13,7 +13,7 @@ CS_CONFIG_DIR="$HOME/.config/code-server"
 CS_CONFIG="$CS_CONFIG_DIR/config.yaml"
 CS_PATCH_DIR="$PREFIX/lib/code-server/patches"
 CS_PATCH="$CS_PATCH_DIR/p.js"
-CS_SVC_DIR="$PREFIX/etc/sv/code-server"
+CS_SVC_DIR="$PREFIX/var/service/code-server"
 
 log_info "开始安装并配置 code-server"
 
@@ -119,6 +119,7 @@ if [ -d "$CS_SVC_DIR" ]; then
 else
     log_info "注册 code-server 为 termux-services 服务..."
     mkdir -p "$CS_SVC_DIR/log"
+    ln -sf "$PREFIX/share/termux-services/svlogger" "$CS_SVC_DIR/log/run"
 
     cat > "$CS_SVC_DIR/run" <<SVC_RUN_EOF
 #!/data/data/com.termux/files/usr/bin/sh
@@ -126,20 +127,13 @@ exec 2>&1
 NODE_OPTIONS="--require $CS_PATCH" exec code-server
 SVC_RUN_EOF
     chmod +x "$CS_SVC_DIR/run"
-
-    cat > "$CS_SVC_DIR/log/run" <<'SVC_LOG_EOF'
-#!/data/data/com.termux/files/usr/bin/sh
-exec svlogger "$@"
-SVC_LOG_EOF
-    chmod +x "$CS_SVC_DIR/log/run"
     log_ok "code-server 服务脚本已创建"
 fi
 
-# ── 7. 通过 termux-services 启用并启动 ────────────────
-log_info "通过 termux-services 启动 code-server..."
+# ── 7. 启用并启动 code-server 服务 ──────────────────────
+log_info "启用 code-server 服务..."
 sv-enable code-server
-sv up code-server
-log_ok "code-server 已启动并设为开机自启"
+log_ok "code-server 已启用并启动（开机自启）"
 
 # ── 信息面板 ─────────────────────────────────────────
 CS_PID=$(pgrep -f "code-server" | head -1)
@@ -162,9 +156,9 @@ echo "  1. 在浏览器中打开上方访问地址"
 echo "  2. 输入上方密码登录"
 echo "  ───────────────────────────────────────────"
 echo "  服务管理："
+echo "  启用	sv-enable code-server"
 echo "  启动	sv up code-server"
 echo "  停止	sv down code-server"
-echo "  启用	sv-enable code-server"
 echo "  禁用	sv-disable code-server"
 echo ""
 

@@ -50,11 +50,10 @@ else
 fi
 log_ok "已禁用密码认证，仅允许密钥登录"
 
-# ── 通过 termux-services 启用并启动 sshd ───────────────
-log_info "通过 termux-services 启动 sshd..."
+# ── 通过 termux-services 启用并启动 sshd ────────────────
+log_info "通过 termux-services 启用 sshd..."
 sv-enable sshd
-sv up sshd
-log_ok "sshd 已启动并设为开机自启"
+log_ok "sshd 已启用并启动（开机自启）"
 
 # ── 信息面板 ───────────────────────────────────────────
 SSH_PID=$(pgrep -x sshd | head -1)
@@ -81,9 +80,9 @@ echo "  3. 连接"
 echo "     ssh -i <私钥文件> -p ${SSH_PORT} ${USERNAME}@${LOCAL_IP}"
 echo "  ───────────────────────────────────────────"
 echo "  服务管理："
+echo "  启用	sv-enable sshd"
 echo "  启动	sv up sshd"
 echo "  停止	sv down sshd"
-echo "  启用	sv-enable sshd"
 echo "  禁用	sv-disable sshd"
 echo ""
 
