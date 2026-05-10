@@ -13,7 +13,7 @@ CS_CONFIG_DIR="$HOME/.config/code-server"
 CS_CONFIG="$CS_CONFIG_DIR/config.yaml"
 CS_PATCH_DIR="$PREFIX/lib/code-server/patches"
 CS_PATCH="$CS_PATCH_DIR/p.js"
-CS_SVC_DIR="$PREFIX/var/service/code-server"
+CS_SVC_DIR="$PREFIX/etc/sv/code-server"
 
 log_info "开始安装并配置 code-server"
 
