@@ -170,7 +170,7 @@ if ! grep -q "cs_info" "$HOME/.bashrc" 2>/dev/null; then
     cat >> "$HOME/.bashrc" <<'BASHRC_EOF'
 
 cs_info() {
-    local port=$(grep -E "^bind-addr" ~/.config/code-server/config.yaml 2>/dev/null | cut -d: -f2)
+    local port=$(grep -E "^bind-addr" ~/.config/code-server/config.yaml 2>/dev/null | awk -F: '{print $NF}')
     port="${port:-8080}"
     local ip=$(ip -4 addr show 2>/dev/null | grep 'inet ' | awk '{print $2}' | cut -d/ -f1 | grep -v 127.0.0.1 | head -1)
     local pwd=$(grep -E "^password:" ~/.config/code-server/config.yaml 2>/dev/null | awk '{print $2}')
