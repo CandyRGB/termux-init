@@ -137,7 +137,7 @@ log_ok "code-server 已启用并启动（开机自启）"
 
 # ── 信息面板 ─────────────────────────────────────────
 CS_PID=$(pgrep -f "code-server" | head -1)
-CS_PORT=$(grep -E "^bind-addr" "$CS_CONFIG" 2>/dev/null | cut -d: -f2)
+CS_PORT=$(grep -E "^bind-addr" "$CS_CONFIG" 2>/dev/null | awk -F: '{print $NF}')
 CS_PORT="${CS_PORT:-8080}"
 LOCAL_IP=$(get_local_ip)
 LOCAL_IP="${LOCAL_IP:-<未获取到IP>}"

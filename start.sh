@@ -49,6 +49,7 @@ log_ok "软件包列表已更新"
 log_info "步骤 4/4：安装核心工具 (git, curl, wget, nano, termux-services)"
 pkg_install git curl wget nano termux-services
 log_ok "核心工具安装完成"
+source "${TERMUX__PREFIX:-"${PREFIX}"}"/etc/profile.d/start-services.sh
 log_warn "重启 Termux 后 termux-services 将自动接管服务启停"
 
 log_ok "Termux 环境初始化完成！"
