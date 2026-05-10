@@ -13,44 +13,56 @@ CS_CONFIG_DIR="$HOME/.config/code-server"
 CS_CONFIG="$CS_CONFIG_DIR/config.yaml"
 CS_PATCH_DIR="$PREFIX/lib/code-server/patches"
 CS_PATCH="$CS_PATCH_DIR/p.js"
-CS_SVC_DIR="$PREFIX/etc/sv/code-server"
+CS_SVC_DIR="$PREFIX/var/service/code-server"
 
 log_info "开始安装并配置 code-server"
 
 # ── 1. 添加 TUR 仓库 ──────────────────────────────────
-log_info "添加 TUR (Termux User Repository) 仓库..."
-pkg install -y tur-repo
-pkg update
-log_ok "TUR 仓库已添加"
-
-# ── 2. 安装 termux-services + code-server ───────────────
-log_info "安装 termux-services 和 code-server..."
-pkg install -y termux-services code-server
-log_ok "termux-services 和 code-server 已安装"
-
-# ── 3. 配置访问密码 ──────────────────────────────────
-log_info "配置 code-server 访问密码"
-log_warn "请输入 code-server 访问密码："
-read -s CS_PASSWORD
-echo ""
-if [ -z "$CS_PASSWORD" ]; then
-    log_error "密码不能为空"
-    exit 1
+log_info "检查 TUR (Termux User Repository) 仓库..."
+if pkg_installed tur-repo; then
+    log_warn "TUR 仓库已添加，跳过"
+else
+    pkg install -y tur-repo
+    pkg update
+    log_ok "TUR 仓库已添加"
 fi
 
-mkdir -p "$CS_CONFIG_DIR"
-cat > "$CS_CONFIG" <<EOF
+# ── 2. 安装 termux-services + code-server ───────────────
+log_info "检查并安装 termux-services 和 code-server..."
+pkg_install termux-services code-server
+log_ok "termux-services 和 code-server 就绪"
+
+# ── 3. 配置访问密码 ──────────────────────────────────
+if [ -f "$CS_CONFIG" ]; then
+    log_warn "code-server 配置文件已存在，跳过密码配置"
+    CS_PASSWORD=$(grep -E "^password:" "$CS_CONFIG" | awk '{print $2}')
+else
+    log_info "配置 code-server 访问密码"
+    log_warn "请输入 code-server 访问密码："
+    read -s CS_PASSWORD
+    echo ""
+    if [ -z "$CS_PASSWORD" ]; then
+        log_error "密码不能为空"
+        exit 1
+    fi
+
+    mkdir -p "$CS_CONFIG_DIR"
+    cat > "$CS_CONFIG" <<EOF
 bind-addr: 0.0.0.0:8080
 auth: password
 password: ${CS_PASSWORD}
 cert: false
 EOF
-log_ok "配置文件已写入"
+    log_ok "配置文件已写入"
+fi
 
 # ── 4. 安装补丁（修复 MAC 地址和平台检测）────────────
-log_info "安装 platform/network 补丁..."
-mkdir -p "$CS_PATCH_DIR"
-cat > "$CS_PATCH" <<'PATCH_EOF'
+if [ -f "$CS_PATCH" ]; then
+    log_warn "补丁脚本已存在，跳过"
+else
+    log_info "安装 platform/network 补丁..."
+    mkdir -p "$CS_PATCH_DIR"
+    cat > "$CS_PATCH" <<'PATCH_EOF'
 console.log("Patching os.networkInterfaces and process.platform started.");
 
 Object.defineProperty(process, "platform", { get() { return "linux"; } });
@@ -71,13 +83,21 @@ function patchedNetworkInterfaces() {
 os.networkInterfaces = patchedNetworkInterfaces;
 console.log("Patching completed.");
 PATCH_EOF
-log_ok "补丁脚本已安装"
+    log_ok "补丁脚本已安装"
+fi
 
 # ── 5. 配置扩展市场地址 ──────────────────────────────
-log_info "配置 VS Code 扩展市场地址..."
-CS_PRODUCT_JSON="$PREFIX/lib/code-server/product.json"
+CS_PRODUCT_JSON="$PREFIX/lib/code-server/lib/vscode/product.json"
 if [ -f "$CS_PRODUCT_JSON" ]; then
-    node -e "
+    CS_HAS_GALLERY=$(node -e "
+const p = JSON.parse(require('fs').readFileSync('$CS_PRODUCT_JSON', 'utf8'));
+process.exit(p.extensionsGallery ? 0 : 1);
+" 2>/dev/null && echo "yes" || echo "no")
+    if [ "$CS_HAS_GALLERY" = "yes" ]; then
+        log_warn "扩展市场地址已配置，跳过"
+    else
+        log_info "配置 VS Code 扩展市场地址..."
+        node -e "
 const fs = require('fs');
 const p = JSON.parse(fs.readFileSync('$CS_PRODUCT_JSON', 'utf8'));
 p.extensionsGallery = {
@@ -87,22 +107,33 @@ p.extensionsGallery = {
 };
 fs.writeFileSync('$CS_PRODUCT_JSON', JSON.stringify(p, null, 2));
 "
-    log_ok "扩展市场地址已配置"
+        log_ok "扩展市场地址已配置"
+    fi
 else
-    log_warn "未找到 product.json，跳过扩展市场配置"
+    log_error "未找到 product.json: $CS_PRODUCT_JSON"
 fi
 
 # ── 6. 注册为 termux-services 服务 ────────────────────
-log_info "注册 code-server 为 termux-services 服务..."
-mkdir -p "$CS_SVC_DIR/log"
-ln -sf "$PREFIX/share/termux-services/svlogger" "$CS_SVC_DIR/log/run"
+if [ -d "$CS_SVC_DIR" ]; then
+    log_warn "code-server 服务已注册，跳过"
+else
+    log_info "注册 code-server 为 termux-services 服务..."
+    mkdir -p "$CS_SVC_DIR/log"
 
-cat > "$CS_SVC_DIR/run" <<SVC_RUN_EOF
-#!/data/data/com.termux/files/usr/bin/bash
-exec NODE_OPTIONS="--require $CS_PATCH" code-server --foreground 2>&1
+    cat > "$CS_SVC_DIR/run" <<SVC_RUN_EOF
+#!/data/data/com.termux/files/usr/bin/sh
+exec 2>&1
+NODE_OPTIONS="--require $CS_PATCH" exec code-server
 SVC_RUN_EOF
-chmod +x "$CS_SVC_DIR/run"
-log_ok "code-server 服务脚本已创建"
+    chmod +x "$CS_SVC_DIR/run"
+
+    cat > "$CS_SVC_DIR/log/run" <<'SVC_LOG_EOF'
+#!/data/data/com.termux/files/usr/bin/sh
+exec svlogger "$@"
+SVC_LOG_EOF
+    chmod +x "$CS_SVC_DIR/log/run"
+    log_ok "code-server 服务脚本已创建"
+fi
 
 # ── 7. 通过 termux-services 启用并启动 ────────────────
 log_info "通过 termux-services 启动 code-server..."

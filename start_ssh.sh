@@ -16,9 +16,9 @@ KEY_FILE="$SSH_DIR/id_ed25519"
 log_info "开始安装并配置 SSH 服务"
 
 # ── 安装 termux-services + openssh ─────────────────────
-log_info "安装 termux-services 和 openssh..."
-pkg install -y termux-services openssh
-log_ok "termux-services 和 openssh 已安装"
+log_info "检查并安装 termux-services 和 openssh..."
+pkg_install termux-services openssh
+log_ok "termux-services 和 openssh 就绪"
 
 # ── 生成 ed25519 密钥对 ────────────────────────────────
 if [ -f "$KEY_FILE" ]; then

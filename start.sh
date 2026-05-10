@@ -8,6 +8,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/logger.sh"
+source "$SCRIPT_DIR/utils.sh"
 
 log_info "开始初始化 Termux 环境"
 
@@ -46,8 +47,8 @@ pkg update -y
 log_ok "软件包列表已更新"
 
 log_info "步骤 4/4：安装核心工具 (git, curl, wget, nano, termux-services)"
-pkg install -y git curl wget nano termux-services
-log_ok "核心工具已安装"
+pkg_install git curl wget nano termux-services
+log_ok "核心工具安装完成"
 log_warn "重启 Termux 后 termux-services 将自动接管服务启停"
 
 log_ok "Termux 环境初始化完成！"
