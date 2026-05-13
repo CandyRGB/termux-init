@@ -1,4 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
+
+# MIT License | Copyright (c) 2026 Tagca Hui
 #
 # Termux 一键初始化脚本
 # 功能：交互式选择组件 → 基础初始化 → 安装所选组件

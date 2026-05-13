@@ -1,4 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
+
+# MIT License | Copyright (c) 2026 Tagca Hui
 #
 # 日志模块
 # 用法：source logger.sh

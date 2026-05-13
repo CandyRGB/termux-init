@@ -1,4 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
+
+# MIT License | Copyright (c) 2026 Tagca Hui
 #
 # code-server 安装与启动脚本
 #

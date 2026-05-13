@@ -1,4 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
+
+# MIT License | Copyright (c) 2026 Tagca Hui
 #
 # Termux 环境初始化脚本
 # 功能：息屏唤醒 + 授予存储权限 + 使用国内镜像源 + 安装核心工具

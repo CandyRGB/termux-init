@@ -1,4 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
+
+# MIT License | Copyright (c) 2026 Tagca Hui
 #
 # Oh My Zsh 安装脚本（使用清华 TUNA 镜像源）
 #
